@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { SortBar } from './components/SortBar';
@@ -15,8 +15,8 @@ import type { Planet, SortOption } from './types/planet';
 import { getPlanetById } from './services/swapiService';
 
 export const App: React.FC = () => {
-  // Read initial state from URL query parameters for bookmarking & direct link support
-  const getInitialUrlState = () => {
+  // Read initial query params only once on mount
+  const [initialParams] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const pageParam = parseInt(params.get('page') || '1', 10);
     const searchParam = params.get('search') || '';
@@ -29,16 +29,15 @@ export const App: React.FC = () => {
       sort: ['default', 'diameter-asc', 'diameter-desc'].includes(sortParam) ? sortParam : 'default',
       planetId: planetIdParam,
     };
-  };
+  });
 
-  const initial = getInitialUrlState();
-
-  const [searchTerm, setSearchTerm] = useState<string>(initial.search);
-  const [currentPage, setCurrentPage] = useState<number>(initial.page);
-  const [sortOption, setSortOption] = useState<SortOption>(initial.sort);
+  const [searchTerm, setSearchTerm] = useState<string>(initialParams.search);
+  const [currentPage, setCurrentPage] = useState<number>(initialParams.page);
+  const [sortOption, setSortOption] = useState<SortOption>(initialParams.sort);
   const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
 
   const debouncedSearch = useDebounce(searchTerm, 350);
+  const deepLinkCheckedRef = useRef(false);
 
   // When search query is edited, reset page to 1
   useEffect(() => {
@@ -56,7 +55,7 @@ export const App: React.FC = () => {
     refetch,
   } = usePlanets(currentPage, debouncedSearch, sortOption);
 
-  // Sync state to URL without full-page reloads
+  // Synchronize state with URL parameters (without full-page reloads)
   useEffect(() => {
     const params = new URLSearchParams();
     if (currentPage > 1) params.set('page', currentPage.toString());
@@ -65,20 +64,21 @@ export const App: React.FC = () => {
     if (selectedPlanet) params.set('planet', selectedPlanet.id);
 
     const queryString = params.toString();
-    const newRelativePathQuery = queryString ? `?${queryString}` : window.location.pathname;
-    window.history.replaceState(null, '', newRelativePathQuery);
+    const newPath = queryString ? `?${queryString}` : window.location.pathname;
+    window.history.replaceState(null, '', newPath);
   }, [currentPage, debouncedSearch, sortOption, selectedPlanet]);
 
-  // Deep-link initial load: If URL contains ?planet=id, fetch and open modal directly
+  // Initial Deep-link load: Runs only once when mounting with ?planet=id
   useEffect(() => {
-    if (initial.planetId && !selectedPlanet) {
-      getPlanetById(initial.planetId)
+    if (!deepLinkCheckedRef.current && initialParams.planetId) {
+      deepLinkCheckedRef.current = true;
+      getPlanetById(initialParams.planetId)
         .then((planet) => setSelectedPlanet(planet))
         .catch(() => {
-          // If planet fails to load from deep link, gracefully ignore
+          // If planet fails to load, gracefully ignore
         });
     }
-  }, [initial.planetId]);
+  }, [initialParams.planetId]);
 
   const handlePlanetSelect = useCallback((planet: Planet) => {
     setSelectedPlanet(planet);
@@ -86,6 +86,12 @@ export const App: React.FC = () => {
 
   const handleModalClose = useCallback(() => {
     setSelectedPlanet(null);
+
+    // Explicitly strip the planet parameter from the URL immediately
+    const params = new URLSearchParams(window.location.search);
+    params.delete('planet');
+    const newQuery = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    window.history.replaceState(null, '', newQuery);
   }, []);
 
   const handleResetSearch = useCallback(() => {
@@ -183,14 +189,10 @@ export const App: React.FC = () => {
         )}
 
         {/* Planet Details Page / Dossier Modal (Required & Bonus Visualizer) */}
-        <AnimatePresence>
-          {selectedPlanet && (
-            <PlanetDetailModal
-              planet={selectedPlanet}
-              onClose={handleModalClose}
-            />
-          )}
-        </AnimatePresence>
+        <PlanetDetailModal
+          planet={selectedPlanet}
+          onClose={handleModalClose}
+        />
       </main>
     </div>
   );
