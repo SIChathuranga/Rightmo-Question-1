@@ -1,3 +1,14 @@
+/**
+ * PlanetVisualizer Component (Bonus Optional Feature)
+ *
+ * Implements an interactive scalable circle data visualization engine.
+ * - Computes dynamic proportional sphere radii based on actual diameter in kilometers.
+ * - Supports celestial reference body benchmarking (Earth, Jupiter, The Moon, Death Star I).
+ * - Displays relative scale ratios (e.g. "0.82x Earth diameter").
+ * - Features an interactive zoom slider (0.5x to 1.5x) and Framer Motion spring physics.
+ * - Dynamically renders atmospheric halos and surface textures tailored to the planet's biome.
+ */
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Maximize2, Scale, Sparkles, AlertCircle } from 'lucide-react';
@@ -6,27 +17,31 @@ import { CELESTIAL_REFERENCES, getPlanetTheme } from '../utils/planetTheme';
 import { formatDiameter, formatNumber } from '../utils/formatters';
 
 interface PlanetVisualizerProps {
+  /** Target planet to visualize */
   planet: Planet;
 }
 
 export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) => {
-  const [selectedRefIndex, setSelectedRefIndex] = useState<number>(0); // Default to Earth
+  // Index of celestial reference body (default: 0 -> Earth)
+  const [selectedRefIndex, setSelectedRefIndex] = useState<number>(0);
+  // User zoom/scale multiplier
   const [scaleMultiplier, setScaleMultiplier] = useState<number>(1);
 
+  // Derive atmospheric color and radial gradient
   const theme = getPlanetTheme(planet.terrain, planet.climate);
   const activeRef = CELESTIAL_REFERENCES[selectedRefIndex];
 
   const targetDiam = planet.numericDiameter;
   const refDiam = activeRef.diameterKm;
 
-  // If diameter is unknown
+  // Edge case: SWAPI unknown or unmeasured diameter
   const isDiameterUnknown = !targetDiam || targetDiam <= 0;
 
-  // Maximum visual diameter allowed in stage (pixels)
+  // Maximum and minimum pixel constraints for stage rendering
   const MAX_PIXEL_DIAM = 210;
   const MIN_PIXEL_DIAM = 24;
 
-  // Determine scaling ratio relative to reference or max of both
+  // Compute scaled pixel diameters for side-by-side comparison
   let planetPx = 90;
   let refPx = 90;
   let ratioText = '';
@@ -40,6 +55,7 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
       Math.max(MIN_PIXEL_DIAM, Math.min(MAX_PIXEL_DIAM, (refDiam / maxVal) * MAX_PIXEL_DIAM * scaleMultiplier))
     );
 
+    // Compute human-friendly comparative size multiplier
     const ratio = targetDiam / refDiam;
     if (ratio >= 1) {
       ratioText = `${ratio.toFixed(2)}x larger than ${activeRef.name}`;
@@ -48,18 +64,21 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
     }
   }
 
+  // Planetary rings for gas giants
   const hasRings = planet.terrain.toLowerCase().includes('gas') || planet.name.toLowerCase() === 'bespin';
 
   return (
     <div className="visualizer-card">
+      {/* Visualizer Card Header */}
       <div className="visualizer-header">
         <div className="visualizer-title">
-          <Scale size={20} />
+          <Scale size={20} aria-hidden="true" />
           <h3>Interactive Planetary Scale Comparison</h3>
         </div>
 
+        {/* Controls: Reference Body Pills & Zoom Slider */}
         <div className="visualizer-controls">
-          {/* Reference selector */}
+          {/* Reference benchmark buttons */}
           <div className="reference-selector" role="group" aria-label="Reference body comparison">
             {CELESTIAL_REFERENCES.map((ref, idx) => (
               <button
@@ -67,17 +86,18 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
                 type="button"
                 className={`ref-pill ${selectedRefIndex === idx ? 'active' : ''}`}
                 onClick={() => setSelectedRefIndex(idx)}
+                aria-pressed={selectedRefIndex === idx}
               >
                 {ref.name}
               </button>
             ))}
           </div>
 
-          {/* Scale Multiplier Slider */}
+          {/* Real-time zoom/scale multiplier slider */}
           {!isDiameterUnknown && (
             <div className="slider-group">
               <label htmlFor="scale-slider">
-                <Maximize2 size={13} style={{ display: 'inline', marginRight: 4 }} />
+                <Maximize2 size={13} style={{ display: 'inline', marginRight: 4 }} aria-hidden="true" />
                 Zoom ({scaleMultiplier.toFixed(1)}x):
               </label>
               <input
@@ -89,15 +109,17 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
                 step="0.1"
                 value={scaleMultiplier}
                 onChange={(e) => setScaleMultiplier(parseFloat(e.target.value))}
+                aria-label="Adjust planetary circle scale"
               />
             </div>
           )}
         </div>
       </div>
 
-      {/* Visualizer Stage */}
+      {/* Visualizer Stage Canvas */}
       <div className="visualizer-stage">
         {isDiameterUnknown ? (
+          // Unmeasured / Unknown Diameter Fallback Wireframe
           <div className="comparison-column" style={{ width: '100%' }}>
             <motion.div
               className="scalable-body-circle"
@@ -111,7 +133,7 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 40, ease: 'linear' }}
             >
-              <AlertCircle size={28} style={{ color: 'var(--gold-neon)' }} />
+              <AlertCircle size={28} style={{ color: 'var(--gold-neon)' }} aria-hidden="true" />
             </motion.div>
             <div className="scalable-body-label">
               <span>{planet.name}</span>
@@ -154,7 +176,7 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
               </div>
             </div>
 
-            {/* Scale Comparison Indicator */}
+            {/* Central Scale Metric Readout */}
             <div
               style={{
                 display: 'flex',
@@ -170,7 +192,7 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
               </span>
             </div>
 
-            {/* Reference Body Scalable Circle */}
+            {/* Benchmark Celestial Reference Scalable Circle */}
             <div className="comparison-column">
               <motion.div
                 className="scalable-body-circle"
@@ -194,7 +216,7 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
         )}
       </div>
 
-      {/* Footer Notes */}
+      {/* Footer Notes & Astrophysics Indicator */}
       <div
         style={{
           display: 'flex',
@@ -206,7 +228,7 @@ export const PlanetVisualizer: React.FC<PlanetVisualizerProps> = ({ planet }) =>
         }}
       >
         <span>
-          <Sparkles size={12} style={{ display: 'inline', color: 'var(--gold-neon)', marginRight: 4 }} />
+          <Sparkles size={12} style={{ display: 'inline', color: 'var(--gold-neon)', marginRight: 4 }} aria-hidden="true" />
           Comparative size modeled with true astrophysical diameter proportionality
         </span>
         <span>Relative Celestial Ratio</span>

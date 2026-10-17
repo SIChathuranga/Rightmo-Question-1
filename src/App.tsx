@@ -1,3 +1,22 @@
+/**
+ * App Root Component — Star Wars Planet Explorer
+ *
+ * Orchestrates:
+ * 1. State Management:
+ *    - Search query state with debouncing (350ms)
+ *    - Pagination (current page & total pages) without full page reloads
+ *    - Diameter sorting (default, ascending, descending)
+ *    - Selected planet dossier modal state
+ * 2. URL Synchronization:
+ *    - Automatically syncs ?page=, ?search=, ?sort=, and ?planet= to the URL
+ *      via HTML5 history.replaceState so filters/views can be bookmarked and shared.
+ * 3. Deep Linking:
+ *    - On cold start, if ?planet=<id> is present, immediately fetches and displays that planet.
+ * 4. UI View States:
+ *    - Loading skeletons, Error state with retry, Empty state with suggestions,
+ *      and animated grid of planet cards.
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from './components/Header';
@@ -15,7 +34,7 @@ import type { Planet, SortOption } from './types/planet';
 import { getPlanetById } from './services/swapiService';
 
 export const App: React.FC = () => {
-  // Read initial query params only once on mount
+  // Read initial query parameters from window.location only once upon initial component mount
   const [initialParams] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const pageParam = parseInt(params.get('page') || '1', 10);
@@ -31,20 +50,24 @@ export const App: React.FC = () => {
     };
   });
 
+  // State: Search filter, Pagination page, Sorting mode, Selected Planet Dossier
   const [searchTerm, setSearchTerm] = useState<string>(initialParams.search);
   const [currentPage, setCurrentPage] = useState<number>(initialParams.page);
   const [sortOption, setSortOption] = useState<SortOption>(initialParams.sort);
   const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
 
+  // Debounced search value (waits 350ms of typing inactivity before triggering an API request)
   const debouncedSearch = useDebounce(searchTerm, 350);
+
+  // Ref flag to ensure the initial URL deep-link (?planet=id) only executes once on cold start
   const deepLinkCheckedRef = useRef(false);
 
-  // When search query is edited, reset page to 1
+  // Whenever the search query is modified, reset pagination back to Page 1
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch]);
 
-  // Main SWAPI planetary data hook
+  // Main SWAPI planetary data hook: handles network calls, caching, cancellation, and sorting
   const {
     planets,
     isLoading,
@@ -55,7 +78,7 @@ export const App: React.FC = () => {
     refetch,
   } = usePlanets(currentPage, debouncedSearch, sortOption);
 
-  // Synchronize state with URL parameters (without full-page reloads)
+  // Synchronize component state with URL query parameters (enables bookmarking without full reload)
   useEffect(() => {
     const params = new URLSearchParams();
     if (currentPage > 1) params.set('page', currentPage.toString());
@@ -68,37 +91,41 @@ export const App: React.FC = () => {
     window.history.replaceState(null, '', newPath);
   }, [currentPage, debouncedSearch, sortOption, selectedPlanet]);
 
-  // Initial Deep-link load: Runs only once when mounting with ?planet=id
+  // Deep-link initial load: If URL contains ?planet=id on cold start, fetch and display its dossier
   useEffect(() => {
     if (!deepLinkCheckedRef.current && initialParams.planetId) {
       deepLinkCheckedRef.current = true;
       getPlanetById(initialParams.planetId)
         .then((planet) => setSelectedPlanet(planet))
         .catch(() => {
-          // If planet fails to load, gracefully ignore
+          // If planet fails to load (e.g. invalid ID), gracefully fallback to list view
         });
     }
   }, [initialParams.planetId]);
 
+  // Handles clicking a planet card to inspect its full dossier
   const handlePlanetSelect = useCallback((planet: Planet) => {
     setSelectedPlanet(planet);
   }, []);
 
+  // Handles closing the dossier modal and cleanly stripping the ?planet param from the URL
   const handleModalClose = useCallback(() => {
     setSelectedPlanet(null);
 
-    // Explicitly strip the planet parameter from the URL immediately
+    // Remove ?planet from URL immediately
     const params = new URLSearchParams(window.location.search);
     params.delete('planet');
     const newQuery = params.toString() ? `?${params.toString()}` : window.location.pathname;
     window.history.replaceState(null, '', newQuery);
   }, []);
 
+  // Resets the search query and returns to page 1
   const handleResetSearch = useCallback(() => {
     setSearchTerm('');
     setCurrentPage(1);
   }, []);
 
+  // Populates search query from an empty state suggestion pill
   const handleSuggestionClick = useCallback((name: string) => {
     setSearchTerm(name);
     setCurrentPage(1);
@@ -113,6 +140,7 @@ export const App: React.FC = () => {
         {/* Search, Filter, and Sorting HUD Controls */}
         <div className="controls-hud">
           <div className="controls-row">
+            {/* Live Search Console */}
             <SearchBar
               value={searchTerm}
               onChange={setSearchTerm}
@@ -120,13 +148,14 @@ export const App: React.FC = () => {
               isLoading={isLoading && searchTerm !== debouncedSearch}
             />
 
+            {/* Bonus: Diameter Sorting Bar */}
             <SortBar
               currentSort={sortOption}
               onSortChange={setSortOption}
             />
           </div>
 
-          {/* Quick Telemetry Status Readout */}
+          {/* Quick Telemetry Status Readout Bar */}
           <div className="stats-bar">
             <span>
               {isLoading ? (
@@ -149,7 +178,7 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* View States: Error, Loading, Empty, or List */}
+        {/* View States: Error, Loading Skeletons, Empty Search State, or Planet Grid */}
         {isError ? (
           <ErrorState message={errorMessage} onRetry={refetch} />
         ) : isLoading ? (
@@ -162,6 +191,7 @@ export const App: React.FC = () => {
           />
         ) : (
           <>
+            {/* Animated Grid of Planet Cards */}
             <motion.div
               className="planets-grid"
               initial={{ opacity: 0 }}
@@ -178,7 +208,7 @@ export const App: React.FC = () => {
               ))}
             </motion.div>
 
-            {/* Pagination Controls without full-page reload */}
+            {/* Accessible Client-Side Pagination Controls (without full-page reload) */}
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -188,7 +218,7 @@ export const App: React.FC = () => {
           </>
         )}
 
-        {/* Planet Details Page / Dossier Modal (Required & Bonus Visualizer) */}
+        {/* Planet Details Page / Dossier Modal (Required Fields & Bonus Scalable Visualizer) */}
         <PlanetDetailModal
           planet={selectedPlanet}
           onClose={handleModalClose}

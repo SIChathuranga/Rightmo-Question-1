@@ -1,10 +1,22 @@
+/**
+ * Pagination Component
+ *
+ * Provides accessible, client-side pagination without full-page reloads.
+ * Generates an intelligent sliding window of page numbers with ellipses,
+ * jump-to-start (First), jump-to-end (Last), Next, and Previous controls.
+ */
+
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface PaginationProps {
+  /** Active 1-based page index */
   currentPage: number;
+  /** Total calculated pages */
   totalPages: number;
+  /** Callback fired when a page change is requested */
   onPageChange: (page: number) => void;
+  /** True while data for a new page is currently loading */
   isLoading?: boolean;
 }
 
@@ -14,11 +26,12 @@ export const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   isLoading = false,
 }) => {
+  // If there is only 1 page, pagination controls are unnecessary
   if (totalPages <= 1) return null;
 
-  // Generate intelligent range of visible page numbers
+  // Generate an intelligent range of visible page numbers with negative numbers as ellipsis markers
   const getPageNumbers = () => {
-    const delta = 2;
+    const delta = 2; // Show 2 pages before and after the current page
     const range: number[] = [];
     for (
       let i = Math.max(2, currentPage - delta);
@@ -28,13 +41,16 @@ export const Pagination: React.FC<PaginationProps> = ({
       range.push(i);
     }
 
+    // Left ellipsis
     if (currentPage - delta > 2) {
-      range.unshift(-1); // ellipsis
+      range.unshift(-1);
     }
+    // Right ellipsis
     if (currentPage + delta < totalPages - 1) {
-      range.push(-2); // ellipsis
+      range.push(-2);
     }
 
+    // Always include first and last page
     range.unshift(1);
     if (totalPages > 1) {
       range.push(totalPages);
@@ -47,7 +63,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <nav className="pagination-container" aria-label="Planetary Archive Pagination">
-      {/* First Page */}
+      {/* First Page Button */}
       <button
         type="button"
         className="page-btn"
@@ -56,10 +72,10 @@ export const Pagination: React.FC<PaginationProps> = ({
         title="First Page"
         aria-label="Navigate to first page"
       >
-        <ChevronsLeft size={16} />
+        <ChevronsLeft size={16} aria-hidden="true" />
       </button>
 
-      {/* Previous Page */}
+      {/* Previous Page Button */}
       <button
         type="button"
         className="page-btn"
@@ -68,10 +84,10 @@ export const Pagination: React.FC<PaginationProps> = ({
         title="Previous Page"
         aria-label="Navigate to previous page"
       >
-        <ChevronLeft size={16} />
+        <ChevronLeft size={16} aria-hidden="true" />
       </button>
 
-      {/* Numbered Page Buttons */}
+      {/* Numbered Page Buttons with Ellipses */}
       {pages.map((pageNum, idx) => {
         if (pageNum < 0) {
           return (
@@ -79,6 +95,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               key={`ellipsis-${idx}`}
               className="mono-telemetry"
               style={{ color: 'var(--text-muted)', padding: '0 0.4rem' }}
+              aria-hidden="true"
             >
               ...
             </span>
@@ -101,7 +118,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         );
       })}
 
-      {/* Next Page */}
+      {/* Next Page Button */}
       <button
         type="button"
         className="page-btn"
@@ -110,10 +127,10 @@ export const Pagination: React.FC<PaginationProps> = ({
         title="Next Page"
         aria-label="Navigate to next page"
       >
-        <ChevronRight size={16} />
+        <ChevronRight size={16} aria-hidden="true" />
       </button>
 
-      {/* Last Page */}
+      {/* Last Page Button */}
       <button
         type="button"
         className="page-btn"
@@ -122,7 +139,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         title="Last Page"
         aria-label="Navigate to last page"
       >
-        <ChevronsRight size={16} />
+        <ChevronsRight size={16} aria-hidden="true" />
       </button>
     </nav>
   );

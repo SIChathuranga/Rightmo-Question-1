@@ -1,3 +1,14 @@
+/**
+ * PlanetDetailModal Component (Planet Details Page / Dossier)
+ *
+ * Renders the full telemetry dossier for a selected Star Wars planet:
+ * - Shows all required attributes: Name, Diameter, Terrain, Climate, Population, Gravity
+ * - Shows additional context: Day/Night cycle, Year/Orbital cycle, Surface Water, Films, Residents
+ * - Embeds the bonus interactive PlanetVisualizer (scalable circle & celestial comparison)
+ * - Provides intuitive back navigation ("Back to Planet Archive" button, close X button,
+ *   backdrop click-to-close, and keyboard Escape listener).
+ */
+
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,12 +36,14 @@ import { getPlanetTheme } from '../utils/planetTheme';
 import { PlanetVisualizer } from './PlanetVisualizer';
 
 interface PlanetDetailModalProps {
+  /** Active selected planet object, or null when closed */
   planet: Planet | null;
+  /** Callback fired to close the modal and return to the list */
   onClose: () => void;
 }
 
 export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, onClose }) => {
-  // Listen for Escape key to close details
+  // Listen for Escape key to close the dossier and lock/unlock body scroll
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -51,6 +64,7 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
     };
   }, [planet, onClose]);
 
+  // Derive atmospheric color scheme
   const theme = planet ? getPlanetTheme(planet.terrain, planet.climate) : null;
 
   return (
@@ -63,13 +77,14 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={(e) => {
-            // Close if clicking on the backdrop itself
+            // Close if clicking directly on the backdrop outside the modal
             if (e.target === e.currentTarget) {
               onClose();
             }
           }}
           aria-modal="true"
           role="dialog"
+          aria-label={`Planetary Dossier: ${planet.name}`}
         >
           <motion.div
             key={`dossier-${planet.id}`}
@@ -86,7 +101,7 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header Bar with Back Button */}
+            {/* Header Bar with Back Button & Close Control */}
             <div className="dossier-header">
               <button
                 type="button"
@@ -98,7 +113,7 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                 }}
                 aria-label="Back to Planet Archive List"
               >
-                <ArrowLeft size={16} />
+                <ArrowLeft size={16} aria-hidden="true" />
                 <span>Back to Planet Archive</span>
               </button>
 
@@ -128,13 +143,13 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                 aria-label="Close dossier"
                 title="Close (Esc)"
               >
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
 
             {/* Dossier Body Content */}
             <div className="dossier-body">
-              {/* Hero Header */}
+              {/* Hero Header with Planet Name and Biome Badges */}
               <div className="dossier-hero">
                 <div className="dossier-title-group">
                   <span style={{ color: theme.badgeText, fontFamily: 'var(--font-telemetry)', fontSize: '0.8rem' }}>
@@ -144,19 +159,20 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                   <div className="dossier-badge-row">
                     {planet.climateList.map((c) => (
                       <span key={c} className="tag-pill climate">
-                        <CloudSun size={12} />
+                        <CloudSun size={12} aria-hidden="true" />
                         {c}
                       </span>
                     ))}
                     {planet.terrainList.map((t) => (
                       <span key={t} className="tag-pill">
-                        <Compass size={12} />
+                        <Compass size={12} aria-hidden="true" />
                         {t}
                       </span>
                     ))}
                   </div>
                 </div>
 
+                {/* Archive Classification Card */}
                 <div
                   style={{
                     background: 'rgba(15, 23, 42, 0.8)',
@@ -191,23 +207,23 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                 </div>
               </div>
 
-              {/* Core Required Telemetry Grid: Name, Diameter, Terrain, Climate, Population, Gravity */}
+              {/* Core Telemetry Grid: Name, Diameter, Terrain, Climate, Population, Gravity */}
               <div className="specs-grid">
-                {/* Diameter (Required) */}
+                {/* 1. Diameter (Mandatory Requirement) */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Equatorial Diameter</span>
-                    <Orbit size={16} style={{ color: 'var(--cyan-neon)' }} />
+                    <Orbit size={16} style={{ color: 'var(--cyan-neon)' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value">{formatDiameter(planet.diameter)}</div>
                   <div className="spec-tile-detail">Physical celestial span across equator</div>
                 </div>
 
-                {/* Gravity (Required) */}
+                {/* 2. Surface Gravity (Mandatory Requirement) */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Surface Gravity</span>
-                    <Weight size={16} style={{ color: 'var(--purple-neon)' }} />
+                    <Weight size={16} style={{ color: 'var(--purple-neon)' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value">{formatGravity(planet.gravity)}</div>
                   <div className="spec-tile-detail">
@@ -215,21 +231,21 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                   </div>
                 </div>
 
-                {/* Population (Required) */}
+                {/* 3. Population (Mandatory Requirement) */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Total Population</span>
-                    <Users size={16} style={{ color: 'var(--gold-neon)' }} />
+                    <Users size={16} style={{ color: 'var(--gold-neon)' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value">{formatPopulation(planet.population)}</div>
                   <div className="spec-tile-detail">Recorded sentient inhabitants</div>
                 </div>
 
-                {/* Climate (Required) */}
+                {/* 4. Climate (Mandatory Requirement) */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Primary Climate</span>
-                    <CloudSun size={16} style={{ color: '#f59e0b' }} />
+                    <CloudSun size={16} style={{ color: '#f59e0b' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value" style={{ textTransform: 'capitalize' }}>
                     {planet.climate || 'Unknown'}
@@ -237,11 +253,11 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                   <div className="spec-tile-detail">Atmospheric weather classification</div>
                 </div>
 
-                {/* Terrain (Required) */}
+                {/* 5. Terrain (Mandatory Requirement) */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Dominant Terrain</span>
-                    <Compass size={16} style={{ color: 'var(--emerald-neon)' }} />
+                    <Compass size={16} style={{ color: 'var(--emerald-neon)' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value" style={{ textTransform: 'capitalize', fontSize: '1.1rem' }}>
                     {planet.terrain || 'Unknown'}
@@ -249,11 +265,11 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                   <div className="spec-tile-detail">Topographical surface biomes</div>
                 </div>
 
-                {/* Surface Water */}
+                {/* 6. Surface Water Percentage */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Surface Water</span>
-                    <Droplets size={16} style={{ color: '#38bdf8' }} />
+                    <Droplets size={16} style={{ color: '#38bdf8' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value">
                     {planet.numericSurfaceWater !== null ? `${planet.numericSurfaceWater}%` : 'Unknown'}
@@ -261,11 +277,11 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                   <div className="spec-tile-detail">Hydrosphere coverage percentage</div>
                 </div>
 
-                {/* Rotation Period (Day Length) */}
+                {/* 7. Rotational Cycle (Day Length) */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Rotational Cycle (Day)</span>
-                    <Clock size={16} style={{ color: 'var(--text-accent)' }} />
+                    <Clock size={16} style={{ color: 'var(--text-accent)' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value">
                     {planet.numericRotationPeriod ? `${formatNumber(planet.numericRotationPeriod)} hrs` : 'Unknown'}
@@ -273,11 +289,11 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                   <div className="spec-tile-detail">Time to complete 1 axial rotation</div>
                 </div>
 
-                {/* Orbital Period (Year Length) */}
+                {/* 8. Orbital Cycle (Year Length) */}
                 <div className="spec-tile">
                   <div className="spec-tile-header">
                     <span>Orbital Cycle (Year)</span>
-                    <Calendar size={16} style={{ color: 'var(--text-accent)' }} />
+                    <Calendar size={16} style={{ color: 'var(--text-accent)' }} aria-hidden="true" />
                   </div>
                   <div className="spec-tile-value">
                     {planet.numericOrbitalPeriod ? `${formatNumber(planet.numericOrbitalPeriod)} days` : 'Unknown'}
@@ -289,7 +305,7 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
               {/* Bonus: Interactive Scalable Planet Size Visualizer */}
               <PlanetVisualizer planet={planet} />
 
-              {/* Extra Astrogation Context */}
+              {/* Extra Astrogation Context: Film appearances and cataloged residents */}
               <div
                 style={{
                   display: 'flex',
@@ -307,12 +323,12 @@ export const PlanetDetailModal: React.FC<PlanetDetailModalProps> = ({ planet, on
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <Film size={15} style={{ color: 'var(--cyan-neon)' }} />
+                  <Film size={15} style={{ color: 'var(--cyan-neon)' }} aria-hidden="true" />
                   <span>Documented in {planet.filmsCount} Star Wars Motion Pictures</span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <UserCheck size={15} style={{ color: 'var(--gold-neon)' }} />
+                  <UserCheck size={15} style={{ color: 'var(--gold-neon)' }} aria-hidden="true" />
                   <span>{planet.residentsCount} Notable Galactic Denizens / Characters Cataloged</span>
                 </div>
               </div>

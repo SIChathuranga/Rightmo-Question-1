@@ -1,5 +1,15 @@
 /**
- * Formats a numeric value with standard comma separators
+ * Formatting and Parsing Utilities
+ * 
+ * Provides safe text formatting, metric conversions, and sanitization
+ * for Star Wars API (SWAPI) astronomical and census data.
+ */
+
+/**
+ * Formats a numeric value with standard US-locale comma separators (e.g. 10465 -> "10,465")
+ *
+ * @param val - Numeric value to format, or null/undefined
+ * @returns Formatted comma-separated string, or "Unknown"
  */
 export function formatNumber(val: number | null | undefined): string {
   if (val === null || val === undefined || isNaN(val)) return 'Unknown';
@@ -7,7 +17,10 @@ export function formatNumber(val: number | null | undefined): string {
 }
 
 /**
- * Formats large population counts compactly (e.g., 2.5M, 1.2B)
+ * Formats large population counts into compact human-readable abbreviations (e.g. 2500000 -> "2.5M")
+ *
+ * @param val - Population count
+ * @returns Compact notation string, or "0 (Uninhabited)" or "Unknown"
  */
 export function formatCompactNumber(val: number | null | undefined): string {
   if (val === null || val === undefined || isNaN(val)) return 'Unknown';
@@ -19,7 +32,11 @@ export function formatCompactNumber(val: number | null | undefined): string {
 }
 
 /**
- * Formats diameter string with km units
+ * Formats a raw diameter string or number with kilometer units (e.g. "10465" -> "10,465 km")
+ * Correctly handles SWAPI edge cases like "unknown", "0", or empty values.
+ *
+ * @param diameter - Raw diameter value from SWAPI
+ * @returns Clean formatted string with "km", or "Unknown"
  */
 export function formatDiameter(diameter: string | number | null | undefined): string {
   if (!diameter || diameter === 'unknown' || diameter === '0') return 'Unknown';
@@ -29,7 +46,10 @@ export function formatDiameter(diameter: string | number | null | undefined): st
 }
 
 /**
- * Formats population string with locale commas and compact context
+ * Formats population string with locale commas and handles "0" and "unknown" gracefully.
+ *
+ * @param population - Raw population string from SWAPI
+ * @returns Formatted census string or status indicator
  */
 export function formatPopulation(population: string | number | null | undefined): string {
   if (!population || population === 'unknown') return 'Unknown';
@@ -40,7 +60,10 @@ export function formatPopulation(population: string | number | null | undefined)
 }
 
 /**
- * Normalizes gravity string
+ * Normalizes raw gravity telemetry string (e.g. "1 standard", "N/A", "unknown")
+ *
+ * @param gravity - Raw gravity string from SWAPI
+ * @returns Cleaned gravity description
  */
 export function formatGravity(gravity: string | null | undefined): string {
   if (!gravity || gravity === 'unknown' || gravity === 'N/A') return 'Standard (Unspecified)';
@@ -48,7 +71,10 @@ export function formatGravity(gravity: string | null | undefined): string {
 }
 
 /**
- * Parses numeric gravity multiplier (e.g., "1 standard" -> 1.0, "0.98 standard" -> 0.98)
+ * Extracts a numeric gravity multiplier from freeform strings (e.g. "1.2 standard" -> 1.2)
+ *
+ * @param gravity - Raw gravity string
+ * @returns Numeric multiplier or null if unparseable
  */
 export function parseNumericGravity(gravity: string | null | undefined): number | null {
   if (!gravity) return null;
@@ -59,7 +85,11 @@ export function parseNumericGravity(gravity: string | null | undefined): number 
 }
 
 /**
- * Extracts the planet ID from a SWAPI URL (e.g., "https://swapi.dev/api/planets/1/" -> "1")
+ * Extracts the numerical planet ID from a SWAPI URL
+ * Example: "https://swapi.dev/api/planets/1/" -> "1"
+ *
+ * @param url - SWAPI resource URL
+ * @returns ID string (e.g. "1"), or the original URL if unparsed
  */
 export function extractPlanetId(url: string): string {
   const matches = url.match(/\/planets\/(\d+)\/?/);

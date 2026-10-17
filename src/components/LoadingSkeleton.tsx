@@ -1,3 +1,11 @@
+/**
+ * LoadingSkeleton Component
+ *
+ * Renders holographic shimmering placeholder cards matching the exact
+ * grid dimensions of the PlanetCard components while asynchronous
+ * SWAPI planetary data is being transmitted.
+ */
+
 import React from 'react';
 
 export const LoadingSkeleton: React.FC = () => {
@@ -5,15 +13,16 @@ export const LoadingSkeleton: React.FC = () => {
     <div className="planets-grid" aria-busy="true" aria-label="Loading planetary telemetry">
       {Array.from({ length: 6 }).map((_, idx) => (
         <div key={idx} className="skeleton-card">
-          <div className="skeleton-shimmer" />
+          {/* Animated holographic light shimmer sweep */}
+          <div className="skeleton-shimmer" aria-hidden="true" />
 
-          {/* Title Row */}
+          {/* Title and ID chip placeholder */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div className="skeleton-line" style={{ width: '55%', height: '24px' }} />
             <div className="skeleton-line" style={{ width: '25%', height: '18px' }} />
           </div>
 
-          {/* Circle Preview Placeholder */}
+          {/* Mini Celestial Circle Preview Placeholder */}
           <div
             style={{
               display: 'flex',
@@ -33,7 +42,7 @@ export const LoadingSkeleton: React.FC = () => {
             />
           </div>
 
-          {/* Metrics Grid Placeholder */}
+          {/* Metrics Grid Placeholders (Diameter & Population) */}
           <div
             style={{
               display: 'grid',
@@ -46,7 +55,7 @@ export const LoadingSkeleton: React.FC = () => {
             <div className="skeleton-line" style={{ height: '48px', borderRadius: '8px' }} />
           </div>
 
-          {/* Tags Placeholder */}
+          {/* Biome Tag Pills Placeholder */}
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
             <div className="skeleton-line" style={{ width: '30%', height: '22px', borderRadius: '12px' }} />
             <div className="skeleton-line" style={{ width: '40%', height: '22px', borderRadius: '12px' }} />

@@ -1,15 +1,34 @@
+/**
+ * Planetary Biome & Atmospheric Theme Engine
+ *
+ * Dynamically resolves visual palettes, radial gradients, badge styles,
+ * and atmospheric glows based on the planet's terrain and climate characteristics.
+ */
+
 export interface BiomeTheme {
+  /** Accent color for highlights and borders */
   primary: string;
+  /** Box shadow glow color with alpha transparency */
   glow: string;
+  /** CSS radial-gradient simulating spherical planetary surface */
   bgGradient: string;
+  /** Secondary surface texture overlay */
   surfaceTexture: string;
+  /** Background color for terrain/climate tag badges */
   badgeBg: string;
+  /** Border color for badges */
   badgeBorder: string;
+  /** Text color for badges */
   badgeText: string;
+  /** High-level human-readable biome classification */
   category: string;
 }
 
+/**
+ * Pre-calibrated biome color palettes tailored to Star Wars planetary archetypes
+ */
 export const BIOME_THEMES: Record<string, BiomeTheme> = {
+  // Arid / Desert worlds (e.g. Tatooine, Geonosis, Jakku)
   desert: {
     primary: '#f59e0b',
     glow: 'rgba(245, 158, 11, 0.45)',
@@ -20,6 +39,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#fbbf24',
     category: 'Arid / Desert',
   },
+  // Glacial / Frozen worlds (e.g. Hoth, Ilum)
   ice: {
     primary: '#38bdf8',
     glow: 'rgba(56, 189, 248, 0.45)',
@@ -30,6 +50,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#7dd3fc',
     category: 'Glacial / Frozen',
   },
+  // Gas Giants & Cloud cities (e.g. Bespin, Yavin)
   gas: {
     primary: '#c084fc',
     glow: 'rgba(192, 132, 252, 0.45)',
@@ -40,6 +61,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#d8b4fe',
     category: 'Gas Giant / Atmospheric',
   },
+  // Dense forest / jungle worlds (e.g. Endor, Kashyyyk)
   forest: {
     primary: '#10b981',
     glow: 'rgba(16, 185, 129, 0.45)',
@@ -50,6 +72,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#6ee7b7',
     category: 'Forest / Terrestrial',
   },
+  // Swamps & murky wetlands (e.g. Dagobah, Nal Hutta)
   swamp: {
     primary: '#84cc16',
     glow: 'rgba(132, 204, 22, 0.45)',
@@ -60,6 +83,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#bef264',
     category: 'Swamp / Wetland',
   },
+  // Volcanic / Molten worlds (e.g. Mustafar, Sullust)
   volcanic: {
     primary: '#ef4444',
     glow: 'rgba(239, 68, 68, 0.5)',
@@ -70,6 +94,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#fca5a5',
     category: 'Volcanic / Molten',
   },
+  // Ocean / Aquatic planets (e.g. Kamino, Manaan)
   ocean: {
     primary: '#06b6d4',
     glow: 'rgba(6, 182, 212, 0.45)',
@@ -80,6 +105,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#67e8f9',
     category: 'Ocean / Aquatic',
   },
+  // Urban Ecumenopolis / Cityscape planets (e.g. Coruscant, Taris)
   city: {
     primary: '#818cf8',
     glow: 'rgba(129, 140, 248, 0.45)',
@@ -90,6 +116,7 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
     badgeText: '#c7d2fe',
     category: 'Cityscape / Ecumenopolis',
   },
+  // Default fallback theme (Standard temperate terrestrial worlds like Alderaan, Naboo)
   default: {
     primary: '#00e5ff',
     glow: 'rgba(0, 229, 255, 0.45)',
@@ -103,7 +130,11 @@ export const BIOME_THEMES: Record<string, BiomeTheme> = {
 };
 
 /**
- * Resolves planet biome theme based on terrain and climate strings
+ * Resolves the closest matching BiomeTheme by scanning terrain and climate keywords
+ *
+ * @param terrain - Planet terrain string
+ * @param climate - Planet climate string
+ * @returns BiomeTheme containing color tokens and background styles
  */
 export function getPlanetTheme(terrain = '', climate = ''): BiomeTheme {
   const text = `${terrain} ${climate}`.toLowerCase();
@@ -137,7 +168,8 @@ export function getPlanetTheme(terrain = '', climate = ''): BiomeTheme {
 }
 
 /**
- * Common reference celestial bodies for the scalable size comparison engine
+ * Benchmark astronomical bodies used to provide intuitive real-world scale
+ * in the interactive Scalable Planet Size Visualizer.
  */
 export const CELESTIAL_REFERENCES = [
   {

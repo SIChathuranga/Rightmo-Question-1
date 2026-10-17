@@ -1,10 +1,21 @@
+/**
+ * SearchBar Component
+ *
+ * Provides a live search console with input debouncing, quick-clear button,
+ * keyboard accessibility shortcut (press "/" or "Ctrl+K" to focus), and loading spinner.
+ */
+
 import React, { useEffect, useRef } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 
 interface SearchBarProps {
+  /** Current text query value */
   value: string;
+  /** Callback fired whenever user types */
   onChange: (val: string) => void;
+  /** Callback to reset/clear search query */
   onClear: () => void;
+  /** True when a debounced search is currently synchronizing with the API */
   isLoading?: boolean;
 }
 
@@ -16,7 +27,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut: Pressing "/" or "Ctrl+K" focuses the search bar
+  // Global Keyboard shortcut: Pressing "/" or "Ctrl+K" focuses the search bar instantly
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === '/' || (e.ctrlKey && e.key === 'k')) && document.activeElement !== inputRef.current) {
@@ -31,6 +42,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className="search-container">
+      {/* Search status icon: switches to spinner when debouncing/querying */}
       <div className="search-icon" aria-hidden="true">
         {isLoading ? (
           <Loader2 size={18} className="animate-spin" style={{ color: 'var(--cyan-neon)' }} />
@@ -39,6 +51,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         )}
       </div>
 
+      {/* Main input element */}
       <input
         ref={inputRef}
         type="text"
@@ -49,6 +62,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         aria-label="Search planets by name"
       />
 
+      {/* Clear button (visible only when input has text) */}
       {value && (
         <button
           type="button"
